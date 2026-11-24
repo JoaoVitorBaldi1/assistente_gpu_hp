@@ -23,55 +23,55 @@ funcoes = {
     "buscar_gpu": buscar_gpu,
     "listar_gpus": listar_gpus,
 }
+if __name__ == "__main__":
+    while True:
+        pergunta = input("Você: ")
 
-while True:
-    pergunta = input("Você: ")
+        if pergunta.strip().lower() == "sair":
+            break
 
-    if pergunta.strip().lower() == "sair":
-        break
+        if pergunta.strip() == "":
+            continue
 
-    if pergunta.strip() == "":
-        continue
+        mensagens.append({"role": "user", "content": pergunta})
 
-    mensagens.append({"role": "user", "content": pergunta})
-
-    # primeira chamada: o modelo decide se precisa de ferramenta
-    resposta = ollama.chat(
-        model="llama3.2",
-        messages=mensagens,
-        tools=[ferramenta_listar, ferramenta_buscar],
-        options={"temperature": 0},
-    )
-
-    pedidos = resposta.message.tool_calls
-    print(">>> pedidos:", pedidos)
-
-    if pedidos:
-        primeiro = pedidos[0]
-        funcao_pedida = primeiro.function.name
-        argumentos = primeiro.function.arguments
-
-        # executa a funcao q o modelo pediu
-        resultado = funcoes[funcao_pedida](**argumentos)
-
-        # o pedido do modelo entra no historico
-        mensagens.append(resposta.message)
-
-        mensagens.append({
-            "role": "tool",
-            "tool_name": funcao_pedida,
-            "content": json.dumps(resultado, ensure_ascii=False),
-        })
-
-        # segunda chamada: sem tools, ele so escreve a resposta final
-        final = ollama.chat(
+        # primeira chamada: o modelo decide se precisa de ferramenta
+        resposta = ollama.chat(
             model="llama3.2",
             messages=mensagens,
+            tools=[ferramenta_listar, ferramenta_buscar],
             options={"temperature": 0},
         )
-        print(final.message.content)
 
-        # guarda a resposta final no historico
-        mensagens.append(final.message)
-    else:
-        print(resposta.message.content)
+        pedidos = resposta.message.tool_calls
+        print(">>> pedidos:", pedidos)
+
+        if pedidos:
+            primeiro = pedidos[0]
+            funcao_pedida = primeiro.function.name
+            argumentos = primeiro.function.arguments
+
+            # executa a funcao q o modelo pediu
+            resultado = funcoes[funcao_pedida](**argumentos)
+
+            # o pedido do modelo entra no historico
+            mensagens.append(resposta.message)
+
+            mensagens.append({
+                "role": "tool",
+                "tool_name": funcao_pedida,
+                "content": json.dumps(resultado, ensure_ascii=False),
+            })
+
+            # segunda chamada: sem tools, ele so escreve a resposta final
+            final = ollama.chat(
+                model="llama3.2",
+                messages=mensagens,
+                options={"temperature": 0},
+            )
+            print(final.message.content)
+
+            # guarda a resposta final no historico
+            mensagens.append(final.message)
+        else:
+            print(resposta.message.content)

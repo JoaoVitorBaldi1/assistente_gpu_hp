@@ -1,6 +1,6 @@
 # Assistente de IA para consulta de GPUs
 
-Assistente conversacional (no terminal) que responde perguntas sobre as GPUs compartilhadas por um time: quais existem, quantas há no total, quantas estão livres agora e quanta memória cada modelo tem.
+Assistente conversacional (no terminal e em uma interface web) que responde perguntas sobre as GPUs compartilhadas por um time: quais existem, quantas há no total, quantas estão livres agora e quanta memória cada modelo tem.
 
 Feito para o desafio de estágio em Machine Learning / AI. O modelo de linguagem roda **localmente** (Ollama + llama3.2), sem APIs pagas.
 
@@ -32,7 +32,9 @@ Dessa forma, números como quantidade e disponibilidade vêm sempre dos dados do
 |---|---|
 | `dados.py` | Guarda as GPUs (dicionário) e as funções de consulta `listar_gpus()` e `buscar_gpu(nome_gpu)` |
 | `ferramentas.py` | Descrição das duas ferramentas no formato que o modelo entende (nome, para que servem, argumentos) |
-| `assistente.py` | Loop de chat: manda a conversa ao modelo, executa a ferramenta que ele pedir e imprime a resposta |
+| `assistente.py` | Chat no terminal: manda a conversa ao modelo, executa a ferramenta que ele pedir e imprime a resposta. Também guarda a instrução de sistema, que a interface web reaproveita |
+| `app.py` | Interface web (Streamlit): mesma lógica do chat do terminal, com balões de conversa, tabela dos dados e a consulta feita ao sistema em cada resposta |
+| `requirements.txt` | Dependências Python (`ollama` e `streamlit`) |
 
 ## Como executar
 
@@ -43,17 +45,23 @@ Testado no Windows com Python 3.14.
    ```
    ollama pull llama3.2
    ```
-3. **Instalar a biblioteca Python**:
+3. **Instalar as dependências Python**:
    ```
-   pip install ollama
+   pip install -r requirements.txt
    ```
-4. **Rodar** (o Ollama precisa estar aberto em segundo plano):
+4. **Rodar** (o Ollama precisa estar aberto em segundo plano). Há duas formas:
+
+   Interface web (abre no navegador):
+   ```
+   streamlit run app.py
+   ```
+
+   Ou chat no terminal (para encerrar, digite `sair`):
    ```
    python assistente.py
    ```
-5. Converse com o assistente. Para encerrar, digite `sair`.
 
-Aparecem linhas começando com `>>> pedidos:`. Elas mostram qual ferramenta o modelo pediu e foram deixadas de propósito como modo de depuração, para ver o que acontece por baixo.
+No terminal aparecem linhas começando com `>>> pedidos:`. Elas mostram qual ferramenta o modelo pediu e foram deixadas de propósito como modo de depuração. Na interface web, o mesmo aparece dentro de cada resposta, no item "Consulta feita ao sistema".
 
 ## Dados simulados
 
@@ -112,16 +120,15 @@ Registro do que deu errado e como entendi cada causa:
 - Se o modelo pedir uma função que não existe ou argumentos errados, o programa para com erro. Ainda não há tratamento de exceções.
 - Os dados ficam em memória e a disponibilidade é fixa. Não há reserva de GPU nem controle de **quando** uma GPU será liberada, apenas quantas estão livres agora.
 - O histórico cresce durante a conversa, então conversas muito longas podem ficar lentas ou confundir o modelo.
-- Interface apenas no terminal.
+- A interface web guarda a conversa apenas enquanto a página está aberta. Recarregar a página começa uma conversa nova.
 
 ## Próximos passos
 
 - Tratar erros (`try/except`) para que uma resposta inesperada do modelo não derrube o chat.
 - Ferramenta própria para listar só as GPUs livres.
 - Testar um modelo maior (por exemplo `qwen2.5:7b`), se a máquina permitir.
-- Interface web simples (Streamlit ou Gradio).
 - Trocar o dicionário por um banco de dados e incluir reserva de GPUs.
 
 ## Uso de IA
 
-O enunciado permite o uso de assistentes de código. Usei o Claude como apoio de estudo: para entender o conceito de tool calling e revisar o meu código. O código foi escrito e testado por mim.
+O enunciado permite o uso de assistentes de código. Usei o Claude como apoio de estudo: para entender o conceito de tool calling e revisar o meu código. O código do assistente (dados, ferramentas e chat do terminal) foi escrito e testado por mim. A interface web (`app.py`) foi feita com ajuda de IA, pois frontend não é a minha área, e reaproveita a mesma lógica do chat do terminal.
